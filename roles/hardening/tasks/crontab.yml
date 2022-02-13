@@ -14,15 +14,54 @@
     name: "{{ crond if 'crond' in ansible_facts.services else 'cron' }}"
     enabled: yes
 
+- name: "Check if /etc/aide.conf exists"
+  stat:
+    path: /etc/aide.conf
+  register: aide_conf
+
+- name: "Define aide config path"
+  set_fact:
+    aide_conf_path: "{{ '/etc/aide.conf' if aide_conf.stat.exists else '/etc/aide/aide.conf' }}"
+
+- name: "Search for the database_in path"
+  shell: "grep 'database_in=' {{ aide_conf_path }} | cut -d ':' -f2"
+  register: aide_db_path
+
+- name: "Search for the database_new path"
+  shell: "grep 'database_new=' {{ aide_conf_path }} | cut -d ':' -f2"
+  register: aide_db_new
+
+- name: "Check if {{ aide_db_path.stdout }} is created"
+  stat:
+    path: "{{ aide_db_path.stdout }}"
+  register: aide_db
+
+- name: "Create new {{ aide_db_new.stdout }}"
+  command: "/usr/sbin/aide --init --config {{ aide_conf_path }}"
+  when: not aide_db.stat.exists
+
+- name: "Copy newly created db"
+  copy:
+    src: "{{ aide_db_new.stdout }}"
+    dest: "{{ aide_db_path.stdout }}"
+    remote_src: yes
+  when: not aide_db.stat.exists
+
+- name: Check for already existing cron
+  stat:
+    path: /etc/cron.daily/aide
+  register: aide_daily
+
 # CIS 1.4.2
-- name: Configure Periodic Execution of AIDE
+- name: Configure Periodic Execution of AIDE if needed
   cron:
     name: run AIDE check
+    state: "{{ 'absent' if aide_daily.stat.exists else 'present' }}"
     minute: "5"
     hour: "4"
     weekday: "0"
     user: root
-    job: /usr/sbin/aide --check
+    job: "/usr/sbin/aide --check {{ aide_conf_path }}"
 
 # CIS 5.1.2
 # CIS 5.1.3
