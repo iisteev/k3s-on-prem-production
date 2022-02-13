@@ -11,7 +11,7 @@
 # CIS 5.1.1
 - name: "Ensure cron daemon is enabled"
   service:
-    name: crond
+    name: "{{ crond if 'crond' in ansible_facts.services else 'cron' }}"
     enabled: yes
 
 # CIS 1.4.2
