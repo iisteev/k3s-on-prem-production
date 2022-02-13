@@ -5,12 +5,14 @@
 - name: Retrieve package facts
   package_facts:
     manager: "auto"
+  tags: libuser_sha512
 
 - name: Retrieve service facts
   service_facts:
   tags:
     - hardening_crontab
     - hardening_kernel_modules
+    - unwanted_svc
 
 # STIG 010220
 - name: NSA 2.3.3.5 Upgrade Password Hashing Algorithm to SHA-512
@@ -22,16 +24,19 @@
     group: 'root'
   when:
     - "'libuser' in ansible_facts.packages"
+  tags: libuser_sha512
 
 - name: Remove unwanted packages
   package:
     name: "{{ unwanted_pkg }}"
     state: absent
+  tags: unwanted_pkg
 
 - name: Install wanted packages
   package:
     name: "{{ wanted_pkg }}"
     state: present
+  tags: wanted_pkg
 
 - name: Disable unwanted services
   service:
@@ -44,6 +49,7 @@
   until: result is not failed
   when: "'{{ item }}' in ansible_facts.services"
   with_items: "{{ unwanted_services }}"
+  tags: unwanted_svc
 
 - import_tasks: package_manager.yml
   tags: hardening_pkg_manager
