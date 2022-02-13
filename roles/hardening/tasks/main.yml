@@ -43,13 +43,30 @@
   with_items: "{{ unwanted_services }}"
 
 - import_tasks: package_manager.yml
+  tags: hardening_pkg_manager
+
 - import_tasks: crontab.yml
+  tags: hardening_crontab
+
 - import_tasks: limits.yml
+  tags: hardening_limits
+
 - import_tasks: mounts.yml
+  tags: hardening_mounts
+
 - import_tasks: ssh.yml
+  tags: hardening_ssh
+
 - import_tasks: auditd.yml
+  tags: hardening_auditd
+
 - import_tasks: kernel_modules.yml
+  tags: hardening_kernel_modules
+
 - import_tasks: kernel_hardening.yml
+  tags: hardening_kernel
+
 - import_tasks: minimize_access.yml
+  tags: hardening_access
 
 ...
