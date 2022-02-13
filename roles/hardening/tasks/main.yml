@@ -8,6 +8,9 @@
 
 - name: Retrieve service facts
   service_facts:
+  tags:
+    - hardening_crontab
+    - hardening_kernel_modules
 
 # STIG 010220
 - name: NSA 2.3.3.5 Upgrade Password Hashing Algorithm to SHA-512
