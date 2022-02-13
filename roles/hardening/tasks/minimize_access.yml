@@ -428,6 +428,7 @@
     mode: '{{ item.mode }}'
     owner: '{{ item.owner }}'
     path: '{{ item.path }}'
+  ignore_errors: yes # some files do not exist based on os, so ignore error.
   with_items:
     - {path: /etc/group, owner: root, group: root, mode: '0644'}
     - {path: /etc/group-, owner: root, group: root, mode: '0644'}
@@ -455,6 +456,7 @@
     owner: '{{ item.owner }}'
     path: '{{ item.path }}'
     recurse: yes
+  ignore_errors: yes # some files do not exist based on os, so ignore error.
   with_items:
     - {path: /etc/audit, owner: root, group: root, mode: 'go='}
     - {path: /etc/grub.d, owner: root, group: root, mode: 'go='}
