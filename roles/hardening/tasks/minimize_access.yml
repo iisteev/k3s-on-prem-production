@@ -210,10 +210,15 @@
     replace: 'umask 027'
     backup: yes
 
+- name: "Determine the auth file used in pam based on distro"
+  set_fact:
+    pam_auth: "{{ 'common-auth' if ansible_os_family == 'Debian' else 'system-auth' }}"
+    pam_password: "{{ 'common-password' if ansible_os_family == 'Debian' else 'password-auth' }}"
+
 # STIG 010200
 - name: "The PAM system service must be configured to store only encrypted representations of passwords."
   pamd:
-    name: system-auth
+    name: "{{ pam_auth }}"
     state: "{{ item.state }}"
     type: password
     control: sufficient
@@ -246,8 +251,8 @@
     new_module_path: pam_faillock.so
     module_arguments: "preauth silent audit deny={{ pam_faillock_deny }}{{ (pam_faillock_fail_for_root) | ternary(' even_deny_root ',' ') }}fail_interval={{ pam_faillock_fail_interval }} unlock_time={{ pam_faillock_unlock_time }}"
   with_items:
-    - "system-auth"
-    - "password-auth"
+    - "{{ pam_auth }}"
+    - "{{ pam_password }}"
 
 # STIG 010330
 - name: "If three unsuccessful logon attempts within 15 minutes occur the associated account must be locked."
@@ -262,8 +267,8 @@
     new_module_path: pam_faillock.so
     module_arguments: "authfail audit deny={{ pam_faillock_deny }}{{ (pam_faillock_fail_for_root) | ternary(' even_deny_root ',' ') }}fail_interval={{ pam_faillock_fail_interval }} unlock_time={{ pam_faillock_unlock_time }}"
   with_items:
-    - "system-auth"
-    - "password-auth"
+    - "{{ pam_auth }}"
+    - "{{ pam_password }}"
 
 # STIG 010330
 - name: "If three unsuccessful logon attempts within 15 minutes occur the associated account must be locked."
@@ -277,8 +282,8 @@
     new_control: required
     new_module_path: pam_faillock.so
   with_items:
-    - "system-auth"
-    - "password-auth"
+    - "{{ pam_auth }}"
+    - "{{ pam_password }}"
 
 # STIG 040160
 - name: "Ensure default user shell timeout is 900 seconds or less | {{ bashrc_file }}"
@@ -361,9 +366,9 @@
     state: present
     line: "auth        required      pam_faillock.so preauth audit silent deny=5 unlock_time=900"
     insertafter: '^#?auth ?'
-  loop:
-    - "system-auth"
-    - "password-auth"
+  with_items:
+    - "{{ pam_auth }}"
+    - "{{ pam_password }}"
 
 # STIG 010310
 - name: "Ensure inactive password lock is 30 days or less"
